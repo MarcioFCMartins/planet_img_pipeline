@@ -9,7 +9,7 @@ import pathlib
 import os
 import hashlib
 
-from PlanetRequest import PlanetRequest
+from TideInterpolator import TideInterpolator
 from DataQuery import DataQuery
 from MosaicOptimizer import MosaicOptimizer
 from pathlib import Path
@@ -17,6 +17,51 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen.canvas import Canvas
 from shapely.geometry import shape
 from shapely.ops import transform
+
+class PlanetFilter:
+    def __init__(self, roi, min_date, max_date, max_cloud_cover):
+        with open(roi) as f:
+            self.roi = json.load(f)
+        self.min_date = f"{min_date}T00:00:00.000Z"
+        self.max_date = f"{max_date}T00:00:00.000Z"
+        self.max_cloud_cover = float(max_cloud_cover)
+        self.filter = None
+        
+    def build_filter(self):
+        date_range_filter = {
+          "type": "DateRangeFilter",
+          "field_name": "acquired",
+          "config": {
+            "gte": self.min_date,
+            "lte": self.max_date
+            }
+        }
+        
+        roi_filter = {
+            "type": "GeometryFilter",
+            "field_name": "geometry",
+            "config": self.roi
+        }
+        
+        cloud_filter = {
+            "type": "RangeFilter",
+            "field_name": "cloud_cover",
+            "config": {
+                "lte": self.max_cloud_cover
+            }
+        }
+
+        asset_filter = {
+            "type": "AssetFilter",
+            "config": ["ortho_analytic_8b_sr"]
+        }
+
+        image_filter = {
+            "type": "AndFilter",
+            "config": [date_range_filter, roi_filter, cloud_filter, asset_filter]
+        }
+            
+        self.filter = image_filter
 
 
 class AssetSelector:
@@ -42,8 +87,8 @@ class AssetSelector:
             next(filter_csv, None)  # Skip header
 
             for i, row in enumerate(filter_csv):
-                planet_filter = PlanetRequest(row[0], row[1], row[2], row[3])
-                planet_filter.build_request()
+                planet_filter = PlanetFilter(row[0], row[1], row[2], row[3])
+                planet_filter.build_filter()
 
                 query_hash = str(self.layers) + row[3] + row[4] + json.dumps(planet_filter.filter)
                 query_hash = hashlib.md5(query_hash.encode("utf-8")).hexdigest()
@@ -201,3 +246,5 @@ class AssetSelector:
         pttm06 = pyproj.CRS("EPSG:3763")
         transformation = pyproj.Transformer.from_crs(wgs84, pttm06, always_xy=True).transform
         return transform(transformation, vector)
+
+
