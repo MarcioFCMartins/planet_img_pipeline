@@ -40,7 +40,20 @@ pip3 install -r requirements.txt
 
 ## 2. Usage
 
-### 2.1. Prepare requests
+### 2.1. Planet API key
+
+To perform any operation using the Planet API, you have to provide your own API key. I am using an Education and Research key, which has a limit of 5 000 km<sub>2</sub> per month.
+
+Go to [your planet account page](https://www.planet.com/account). You'll find your key in the "My settings" tab. Then, create a text file called `.env` in the repository and add the following content:
+
+```
+PLANET_KEY=<your-key-here>
+```
+
+You should replace the \<your-key-here\> with your own API key. Do NOT share this with other people.
+
+
+### 2.2. Prepare requests
 
 **Region of interest:**  
 Your regions of interest should provided as geoJSON files. They can be placed anywhere you want, but for ease of use I recommend placing them in `inputs`. 
@@ -61,17 +74,18 @@ Currently, the following image parameters can be passed to the program:
 7. max-tide  Maximum tidal height acceptable.
 8. nearest_port - This is the code for the reference port to be used to estimate tides. These are numeric codes provided by the Instituto Hidrográfico. You can consult a list of available sites at the end of this document .
 
+
 # TODO: Add port list
 
-### 2.2. Check available images  
+### 2.3. Check available images  
 
 After filling out your requests' details, you're ready to check which information is available.
 
-### 2.3. Excluding bad queries
+### 2.4. Excluding bad queries
 
 Right now this is just bad. You have to basically delete your download queue and ask for a new set of queries.
 
-### 2.4. Download images
+### 2.5. Download images
 
 # 3. Goals
 
