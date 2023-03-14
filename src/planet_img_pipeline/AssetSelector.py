@@ -19,11 +19,12 @@ from shapely.geometry import shape
 from shapely.ops import transform
 
 class PlanetFilter:
-    def __init__(self, roi, min_date, max_date, max_cloud_cover):
+    def __init__(self, roi, min_date, max_date, max_cloud_cover, asset_type):
         self.roi = self.__load_roi(roi)
         self.min_date = f"{min_date}T00:00:00.000Z"
         self.max_date = f"{max_date}T00:00:00.000Z"
         self.max_cloud_cover = float(max_cloud_cover)
+        self.asset_type = asset_type
         self.filter = None
         
     def build_filter(self):
@@ -52,15 +53,20 @@ class PlanetFilter:
 
         asset_filter = {
             "type": "AssetFilter",
-            "config": ["ortho_analytic_8b_sr"]
+            "config": [self.asset_type]
         }
 
-        image_filter = {
+        combined_filter = {
             "type": "AndFilter",
             "config": [date_range_filter, roi_filter, cloud_filter, asset_filter]
         }
-            
-        self.filter = image_filter
+        
+        planet_filter = {
+            "item_types": ["PSScene"],
+            "filter": combined_filter
+        }
+
+        self.filter = planet_filter
 
     @staticmethod
     def __load_roi(roi):
@@ -115,7 +121,7 @@ class AssetSelector:
             next(filter_csv, None)  # Skip header
 
             for i, row in enumerate(filter_csv):
-                planet_filter = PlanetFilter(row[0], row[1], row[2], row[3])
+                planet_filter = PlanetFilter(roi = row[0], min_date = row[1], max_date = row[2], asset_type = row[3])
                 planet_filter.build_filter()
 
                 query_hash = str(self.layers) + row[3] + row[4] + json.dumps(planet_filter.filter)
@@ -123,7 +129,17 @@ class AssetSelector:
 
                 query_name = f'{Path(row[0]).stem}_{row[1].replace("-", "")}_{row[2].replace("-", "")}'
                 print(f'\nQuerying DATA API: {filter_csv.line_num - 1} of {row_count}')
-                query_result = DataQuery(planet_filter, row[5], row[6], self.planet_session)
+
+                # Extract minimum and maximum tide values
+                min_tide = row[5].split(",")[0].strip()
+                max_tide = row[5].split(",")[1].strip()
+
+                query_result = DataQuery(
+                    planet_filter = planet_filter, 
+                    min_tide = min_tide, 
+                    max_tide = max_tide,
+                    port = row[6], 
+                    planet_session = self.planet_session)
 
                 if query_result.items:
                     self.query_names.append(query_name)

@@ -3,13 +3,19 @@ from TideInterpolator import TideInterpolator
 
 
 class DataQuery:
-    def __init__(self, planet_filter, max_tide, port, planet_session):
-        self.filter = planet_filter
+    def __init__(self, planet_filter, min_tide, max_tide, port, planet_session):
+        self.filter = planet_filter.filter
         self.session = planet_session
         try:
             self.max_tide = float(max_tide)
         except ValueError:
             self.max_tide = None
+
+        try:
+            self.min_tide = float(min_tide)
+        except ValueError:
+            self.min_tide = None
+
         self.port = port
         self.items = self.__concat_items()
 
@@ -32,19 +38,16 @@ class DataQuery:
         """
         Go through all available pages returned by the query and combine them in a single object. Called at init
         """
-        image_type_filter = {
-            "item_types": ["PSScene"],
-            "filter": self.filter.filter
-        }
 
         tries = 0
         sleep = 1
+        # Submit query 
         while tries < 30:
             tries += 1
             try:
                 first_response_page = self.session.post(
                     'https://api.planet.com/data/v1/quick-search?_sort=acquired asc&_page_size=50',
-                    json=image_type_filter
+                    json=self.filter
                 )
             except Exception:
                 # If the query fails, re-try
@@ -81,8 +84,8 @@ class DataQuery:
             for i, item in enumerate(items):
                 tidal_height = tide_interpolator.interpolate_tide(date_time=item["properties"]["acquired"], port=self.port)
 
-                if tidal_height <= self.max_tide:
-                    print(f"Asset {i + 1} of {len(items)} is below maximum tidal height.", end = "\r")
+                if tidal_height >= self.min_tide and tidal_height <= self.max_tide :
+                    print(f"Asset {i + 1} of {len(items)} is within tidal range.", end = "\r")
                     item["properties"]["tidal_height"] = tidal_height
                     items_filtered.append(item)
         else:
