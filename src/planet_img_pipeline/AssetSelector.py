@@ -130,15 +130,12 @@ class AssetSelector:
                 query_name = f'{Path(row[0]).stem}_{row[1].replace("-", "")}_{row[2].replace("-", "")}'
                 print(f'\nQuerying DATA API: {filter_csv.line_num - 1} of {row_count}')
 
-                # Extract minimum and maximum tide values
-                min_tide = row[5].split(",")[0].strip()
-                max_tide = row[5].split(",")[1].strip()
 
                 query_result = DataQuery(
                     planet_filter = planet_filter, 
-                    min_tide = min_tide, 
-                    max_tide = max_tide,
-                    port = row[6], 
+                    min_tide = row[5], 
+                    max_tide = row[6],
+                    port = row[7], 
                     planet_session = self.planet_session)
 
                 if query_result.items:
