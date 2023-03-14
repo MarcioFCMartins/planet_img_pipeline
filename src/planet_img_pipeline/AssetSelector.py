@@ -20,8 +20,7 @@ from shapely.ops import transform
 
 class PlanetFilter:
     def __init__(self, roi, min_date, max_date, max_cloud_cover):
-        with open(roi) as f:
-            self.roi = json.load(f)
+        self.roi = self.__load_roi(roi)
         self.min_date = f"{min_date}T00:00:00.000Z"
         self.max_date = f"{max_date}T00:00:00.000Z"
         self.max_cloud_cover = float(max_cloud_cover)
@@ -62,6 +61,35 @@ class PlanetFilter:
         }
             
         self.filter = image_filter
+
+    @staticmethod
+    def __load_roi(roi):
+        with open(roi) as f:
+            roi_json = json.load(f)
+        
+        try:
+            # If ROI geojson was formatted as an individual polygon, do nothing else
+            if roi_json['type'] == 'Polygon' or  roi_json['type'] == 'MultiPolygon':
+                pass
+            # If a collection of features was passed, select the first polygon
+            elif roi_json['type'] == 'FeatureCollection':
+                # Extract only polygons from the collection
+                roi_polygons = [feature['geometry'] for feature in roi_json['features'] if feature['geometry']['type'] == 'Polygon']
+
+                if len(roi_json['features']) > 1:
+                    print(f"ROI {roi} has more than one feature. Only using the first one")
+                    roi_json = roi_polygons[0]
+                elif len(roi_json['features']) == 0:
+                    print(f"No polygons found in {roi}")
+                    roi_json = None
+            else:
+                roi_json = None
+        except:
+            print(f'Error in loading ROI {roi}')
+            roi_json = None
+
+        return roi_json
+
 
 
 class AssetSelector:

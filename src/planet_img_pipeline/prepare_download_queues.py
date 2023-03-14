@@ -22,7 +22,7 @@ def main():
     )
 
     # Load new requests from CSV file
-    query_processor.query_available_data("./inputs/south-portugal-queries-seasonal.csv")
+    query_processor.query_available_data("./inputs/image-queries.csv")
 
     print("\nStarting data optimization")
     query_processor.optimize_available_data(min_coverage=0.95)
