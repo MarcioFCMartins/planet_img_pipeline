@@ -101,9 +101,9 @@ class PlanetFilter:
 class AssetSelector:
     def __init__(self, download_queue_path, planet_session):
         self.planet_session = planet_session
-        self.available_data = []
-        self.query_names = []
-        self.query_hashes = []
+        self.available_data = [] #TODO move into DataQuery
+        self.query_names = []    #TODO move into DataQuery
+        self.query_hashes = []   #TODO move into DataQuery
         self.queries = []
         self.download_queue_path = download_queue_path
         # If a download queue already exists, load it
@@ -124,15 +124,16 @@ class AssetSelector:
                     roi = row[0], 
                     min_date = row[1], 
                     max_date = row[2], 
-                    asset_type = row[3])
+                    max_cloud_cover = row[3],
+                    asset_type = row[4])
                 
                 planet_filter.build_filter()
 
-                query_hash = str(row[8]) + row[3] + row[4] + json.dumps(planet_filter.filter)
-                query_hash = hashlib.md5(query_hash.encode("utf-8")).hexdigest()
+                query_hash = str(row[8]) + row[3] + row[4] + json.dumps(planet_filter.filter) #TODO move into DataQuery
+                query_hash = hashlib.md5(query_hash.encode("utf-8")).hexdigest()              #TODO move into DataQuery
 
-                query_name = f'{Path(row[0]).stem}_{row[1].replace("-", "")}_{row[2].replace("-", "")}'
-                print(f'\nQuerying DATA API: {filter_csv.line_num - 1} of {row_count}')
+                query_name = f'{Path(row[0]).stem}_{row[1].replace("-", "")}_{row[2].replace("-", "")}'  #TODO move into DataQuery
+                print(f'\nQuerying DATA API: {filter_csv.line_num - 1} of {row_count}')                  #TODO move into DataQuery
 
 
                 query_result = DataQuery(
@@ -151,16 +152,17 @@ class AssetSelector:
                 # Sleep to respect rate limit of 10 requests per second
                 time.sleep(0.1)
 
-    def optimize_available_data(self, dataquery, min_coverage):
+    def optimize_available_data(self, min_coverage):
         optimal_tiles = []
         geometries = []
         query_number = len(self.available_data)
         queued_hashes = [query["hash"] for query in self.download_queue.values()]
-        n_layers = dataquery.layers
 
         for i, query in enumerate(self.available_data):
             # If this query is already in the download queue, skip to next one
-            query_hash = self.query_hashes[i]
+            query_hash = self.query_hashes[i]  #TODO This should be placed in the DataQuery, not as part of the AssetSelector
+            n_layers = query.layers
+
             if query_hash in queued_hashes:
                 optimal_tiles.append(None)
                 print(f'Query {self.query_names[i]} is already in queue. Skipping.')

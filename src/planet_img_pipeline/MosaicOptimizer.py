@@ -28,7 +28,7 @@ class MosaicOptimizer:
         transformation = pyproj.Transformer.from_crs(wgs84, pttm06, always_xy=True).transform
         return transform(transformation, vector)
 
-    def select_tiles(self, possibilities, min_coverage):
+    def select_tiles(self, n_layers, min_coverage):
         if not self.items:
             return None
 
@@ -40,8 +40,8 @@ class MosaicOptimizer:
             current_intersect = self.roi.intersection(item.convex_hull)
             intersection_area.append(current_intersect.area / 1000000)
 
-        # Select the nth items with highest ROI cover to start the mosaic, where n = possibilities
-        starter_indices = sorted(range(len(intersection_area)), key=lambda i: intersection_area[i])[-possibilities:]
+        # Select the nth items with highest ROI cover to start the mosaic, where n = number of layers
+        starter_indices = sorted(range(len(intersection_area)), key=lambda i: intersection_area[i])[-int(n_layers):]
         mosaics.extend(starter_indices)
         # Keep track of which items were already used in this query
         included_items = mosaics.copy()

@@ -4,7 +4,7 @@ from TideInterpolator import TideInterpolator
 
 class DataQuery:
     def __init__(self, planet_filter, min_tide, max_tide, port, layers, planet_session):
-        self.filter = planet_filter.filter
+        self.filter = planet_filter
         self.session = planet_session
         try:
             self.max_tide = float(max_tide)
@@ -47,7 +47,7 @@ class DataQuery:
             try:
                 first_response_page = self.session.post(
                     'https://api.planet.com/data/v1/quick-search?_sort=acquired asc&_page_size=50',
-                    json=self.filter
+                    json=self.filter.filter
                 )
             except Exception:
                 # If the query fails, re-try
