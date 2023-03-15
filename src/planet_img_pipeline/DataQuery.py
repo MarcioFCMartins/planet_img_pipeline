@@ -1,9 +1,12 @@
 import time
+import json
+import hashlib
 from TideInterpolator import TideInterpolator
 
 
 class DataQuery:
-    def __init__(self, planet_filter, min_tide, max_tide, port, layers, planet_session):
+    def __init__(self, planet_filter, planet_session, 
+                 min_tide, max_tide, port, layers, query_name):
         self.filter = planet_filter
         self.session = planet_session
         try:
@@ -15,9 +18,11 @@ class DataQuery:
             self.min_tide = float(min_tide)
         except ValueError:
             self.min_tide = None
-        self.port = port
+        self.port   = port
         self.layers = layers
-        self.items = self.__concat_items()
+        self.name   = query_name
+        self.hash   = self.__hashname()
+        self.items  = self.__concat_items()
 
     def query_stats(self, interval):
         stats_filter = {
@@ -93,3 +98,14 @@ class DataQuery:
             items_filtered = items
 
         return items_filtered
+
+    def __hashname(self):
+        query_str = str(
+            str(self.layers) + 
+            str(self.min_tide) + 
+            str(self.max_tide) +
+              json.dumps(self.filter.filter)
+        ) 
+        query_hash = hashlib.md5(query_str.encode("utf-8")).hexdigest() 
+
+        return query_hash   

@@ -7,7 +7,6 @@ import time
 import pyproj
 import pathlib
 import os
-import hashlib
 
 from TideInterpolator import TideInterpolator
 from DataQuery import DataQuery
@@ -97,14 +96,11 @@ class PlanetFilter:
         return roi_json
 
 
-
 class AssetSelector:
     def __init__(self, download_queue_path, planet_session):
         self.planet_session = planet_session
-        self.available_data = [] #TODO move into DataQuery
-        self.query_names = []    #TODO move into DataQuery
-        self.query_hashes = []   #TODO move into DataQuery
         self.queries = []
+        self.optimal_tiles = []
         self.download_queue_path = download_queue_path
         # If a download queue already exists, load it
         if os.path.isfile(download_queue_path):
@@ -129,12 +125,8 @@ class AssetSelector:
                 
                 planet_filter.build_filter()
 
-                query_hash = str(row[8]) + row[3] + row[4] + json.dumps(planet_filter.filter) #TODO move into DataQuery
-                query_hash = hashlib.md5(query_hash.encode("utf-8")).hexdigest()              #TODO move into DataQuery
-
-                query_name = f'{Path(row[0]).stem}_{row[1].replace("-", "")}_{row[2].replace("-", "")}'  #TODO move into DataQuery
-                print(f'\nQuerying DATA API: {filter_csv.line_num - 1} of {row_count}')                  #TODO move into DataQuery
-
+                query_name = f'{Path(row[0]).stem}_{row[1].replace("-", "")}_{row[2].replace("-", "")}_{row[5]}:{row[6]}'  
+                print(f'\nQuerying DATA API: {filter_csv.line_num - 1} of {row_count}')                  
 
                 query_result = DataQuery(
                     planet_filter = planet_filter, 
@@ -142,12 +134,11 @@ class AssetSelector:
                     max_tide = row[6],
                     port = row[7], 
                     layers = row[8],
+                    query_name = query_name,
                     planet_session = self.planet_session)
 
                 if query_result.items:
-                    self.query_names.append(query_name)
-                    self.query_hashes.append(query_hash)
-                    self.available_data.append(query_result)
+                    self.queries.append(query_result)
 
                 # Sleep to respect rate limit of 10 requests per second
                 time.sleep(0.1)
@@ -155,17 +146,17 @@ class AssetSelector:
     def optimize_available_data(self, min_coverage):
         optimal_tiles = []
         geometries = []
-        query_number = len(self.available_data)
+        query_number = len(self.queries)
         queued_hashes = [query["hash"] for query in self.download_queue.values()]
 
-        for i, query in enumerate(self.available_data):
+        for i, query in enumerate(self.queries):
             # If this query is already in the download queue, skip to next one
-            query_hash = self.query_hashes[i]  #TODO This should be placed in the DataQuery, not as part of the AssetSelector
+            query_hash = query.hash
             n_layers = query.layers
 
             if query_hash in queued_hashes:
                 optimal_tiles.append(None)
-                print(f'Query {self.query_names[i]} is already in queue. Skipping.')
+                print(f'Query {query.name} is already in queue. Skipping.')
                 continue
 
             optimizer = MosaicOptimizer(query)
@@ -175,17 +166,17 @@ class AssetSelector:
 
             print(f'Optimizing selected assets: {i + 1} of {query_number}')
 
-        self.queries = optimal_tiles
+        self.optimal_tiles = optimal_tiles
 
     def create_download_queue(self):
         for i, query in enumerate(self.queries):
             # Skip queries that were already in queue
-            if query is None:
+            if query is None or self.optimal_tiles[i] is None:
                 continue
 
-            query_name = self.query_names[i]
-            query_hash = self.query_hashes[i]
-            query_roi = self.available_data[i].filter.roi
+            query_name = query.name
+            query_hash = query.hash
+            query_roi = query.filter.roi
             query_area = self.__project_vectors(shape(query_roi).buffer(0))
             query_area = query_area.area
             query_queue = {
@@ -196,9 +187,10 @@ class AssetSelector:
                 "downloaded": False,
                 "area": query_area
             }
-            for j, mosaic in enumerate(query):
-                for k, item_index in enumerate(mosaic[0]):
-                    current_item = self.available_data[i].items[item_index]
+
+            for j, layer in enumerate(self.optimal_tiles[0]):
+                for k, item_index in enumerate(layer[0]):
+                    current_item = query.items[item_index]
                     query_queue["items"].append(current_item["id"])
 
             self.download_queue[query_name] = query_queue
@@ -209,10 +201,10 @@ class AssetSelector:
     def generate_report(self, grid_cell_number, destination_folder):
         for i, query in enumerate(self.queries):
             # Skip queries that were already in queue
-            if query is None:
+            if query is None or self.optimal_tiles[i] is None:
                 continue
 
-            report_name = f'{self.query_names[i]}.pdf'
+            report_name = f'{query.name}.pdf'
             PAGE_SIZE = 1200
             grid_size = math.floor((PAGE_SIZE - 200) / grid_cell_number)
             report_path = pathlib.Path(os.path.join(destination_folder, report_name))
@@ -234,9 +226,9 @@ class AssetSelector:
                 "wasted_area": 0
             }
 
-            for mosaic in query:
-                query_items.extend(mosaic[0])
-                mosaic_stats = mosaic[1]
+            for layer in self.optimal_tiles[i]:
+                query_items.extend(layer[0])
+                mosaic_stats = layer[1]
                 query_stats["query_area"] = query_stats["query_area"] + mosaic_stats["mosaic_area"]
                 query_stats["wasted_area"] = query_stats["wasted_area"] + mosaic_stats["wasted_area"]
 
@@ -245,7 +237,7 @@ class AssetSelector:
             canvas.drawString(500, -120, f'wasted bandwidth:{round(query_stats["wasted_area"])} km2')
 
             for j, item_index in enumerate(query_items):
-                item = self.available_data[i].items[item_index]
+                item = self.queries[i].items[item_index]
                 # Get coordinates in the page for corresponding cell
                 x = col * grid_size
                 y = row * grid_size + 200  # Leave top of page empty for mosaic stats
@@ -295,5 +287,3 @@ class AssetSelector:
         pttm06 = pyproj.CRS("EPSG:3763")
         transformation = pyproj.Transformer.from_crs(wgs84, pttm06, always_xy=True).transform
         return transform(transformation, vector)
-
-
