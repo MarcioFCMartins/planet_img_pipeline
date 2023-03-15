@@ -16,8 +16,7 @@ def main():
 
     # Load the previous image queries and setup settings for new requests
     query_processor = AssetSelector(
-        "./outputs/download_queue.json", 
-        layers=3, 
+        "./outputs/download_queue.json",
         planet_session=planet_session
     )
 

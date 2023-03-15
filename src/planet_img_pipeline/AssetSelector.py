@@ -99,14 +99,13 @@ class PlanetFilter:
 
 
 class AssetSelector:
-    def __init__(self, download_queue_path, layers, planet_session):
+    def __init__(self, download_queue_path, planet_session):
         self.planet_session = planet_session
         self.available_data = []
         self.query_names = []
         self.query_hashes = []
         self.queries = []
         self.download_queue_path = download_queue_path
-        self.layers = layers
         # If a download queue already exists, load it
         if os.path.isfile(download_queue_path):
             with open(download_queue_path, "r", encoding="utf-8") as file:
@@ -121,10 +120,15 @@ class AssetSelector:
             next(filter_csv, None)  # Skip header
 
             for i, row in enumerate(filter_csv):
-                planet_filter = PlanetFilter(roi = row[0], min_date = row[1], max_date = row[2], asset_type = row[3])
+                planet_filter = PlanetFilter(
+                    roi = row[0], 
+                    min_date = row[1], 
+                    max_date = row[2], 
+                    asset_type = row[3])
+                
                 planet_filter.build_filter()
 
-                query_hash = str(self.layers) + row[3] + row[4] + json.dumps(planet_filter.filter)
+                query_hash = str(row[8]) + row[3] + row[4] + json.dumps(planet_filter.filter)
                 query_hash = hashlib.md5(query_hash.encode("utf-8")).hexdigest()
 
                 query_name = f'{Path(row[0]).stem}_{row[1].replace("-", "")}_{row[2].replace("-", "")}'
@@ -136,6 +140,7 @@ class AssetSelector:
                     min_tide = row[5], 
                     max_tide = row[6],
                     port = row[7], 
+                    layers = row[8],
                     planet_session = self.planet_session)
 
                 if query_result.items:
@@ -146,11 +151,12 @@ class AssetSelector:
                 # Sleep to respect rate limit of 10 requests per second
                 time.sleep(0.1)
 
-    def optimize_available_data(self, min_coverage):
+    def optimize_available_data(self, dataquery, min_coverage):
         optimal_tiles = []
         geometries = []
         query_number = len(self.available_data)
         queued_hashes = [query["hash"] for query in self.download_queue.values()]
+        n_layers = dataquery.layers
 
         for i, query in enumerate(self.available_data):
             # If this query is already in the download queue, skip to next one
@@ -161,7 +167,7 @@ class AssetSelector:
                 continue
 
             optimizer = MosaicOptimizer(query)
-            query_result = optimizer.select_tiles(self.layers, min_coverage)
+            query_result = optimizer.select_tiles(n_layers, min_coverage)
             optimal_tiles.append(query_result)
             geometries.append(optimizer.items)
 
