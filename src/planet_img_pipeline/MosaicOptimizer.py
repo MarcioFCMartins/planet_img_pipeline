@@ -95,5 +95,5 @@ class MosaicOptimizer:
                 "wasted_area": covered_region.difference(self.roi).area / 1000000,
                 "missing_fraction": missing_fraction}
 
-
+        
         return mosaics

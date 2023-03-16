@@ -97,6 +97,10 @@ class DataQuery:
             print("No tidal height filtering.")
             items_filtered = items
 
+        # If no items match the filters, return None
+        if len(items_filtered) == 0:
+            items_filtered = None
+
         return items_filtered
 
     def __hashname(self):

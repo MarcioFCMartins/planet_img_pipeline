@@ -137,8 +137,7 @@ class AssetSelector:
                     query_name = query_name,
                     planet_session = self.planet_session)
 
-                if query_result.items:
-                    self.queries.append(query_result)
+                self.queries.append(query_result)
 
                 # Sleep to respect rate limit of 10 requests per second
                 time.sleep(0.1)
@@ -166,12 +165,13 @@ class AssetSelector:
 
             print(f'Optimizing selected assets: {i + 1} of {query_number}')
 
+
         self.optimal_tiles = optimal_tiles
 
     def create_download_queue(self):
         for i, query in enumerate(self.queries):
             # Skip queries that were already in queue
-            if query is None or self.optimal_tiles[i] is None:
+            if query.items is None or self.optimal_tiles[i] is None:
                 continue
 
             query_name = query.name
@@ -188,7 +188,7 @@ class AssetSelector:
                 "area": query_area
             }
 
-            for j, layer in enumerate(self.optimal_tiles[0]):
+            for j, layer in enumerate(self.optimal_tiles[i]):
                 for k, item_index in enumerate(layer[0]):
                     current_item = query.items[item_index]
                     query_queue["items"].append(current_item["id"])
