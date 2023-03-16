@@ -17,6 +17,7 @@ from reportlab.pdfgen.canvas import Canvas
 from shapely.geometry import shape
 from shapely.ops import transform
 
+
 class PlanetFilter:
     def __init__(self, roi, min_date, max_date, max_cloud_cover, asset_type):
         self.roi = self.__load_roi(roi)
@@ -25,45 +26,34 @@ class PlanetFilter:
         self.max_cloud_cover = float(max_cloud_cover)
         self.asset_type = asset_type
         self.filter = None
-        
+
     def build_filter(self):
         date_range_filter = {
-          "type": "DateRangeFilter",
-          "field_name": "acquired",
-          "config": {
-            "gte": self.min_date,
-            "lte": self.max_date
-            }
+            "type": "DateRangeFilter",
+            "field_name": "acquired",
+            "config": {"gte": self.min_date, "lte": self.max_date},
         }
-        
+
         roi_filter = {
             "type": "GeometryFilter",
             "field_name": "geometry",
-            "config": self.roi
+            "config": self.roi,
         }
-        
+
         cloud_filter = {
             "type": "RangeFilter",
             "field_name": "cloud_cover",
-            "config": {
-                "lte": self.max_cloud_cover
-            }
+            "config": {"lte": self.max_cloud_cover},
         }
 
-        asset_filter = {
-            "type": "AssetFilter",
-            "config": [self.asset_type]
-        }
+        asset_filter = {"type": "AssetFilter", "config": [self.asset_type]}
 
         combined_filter = {
             "type": "AndFilter",
-            "config": [date_range_filter, roi_filter, cloud_filter, asset_filter]
+            "config": [date_range_filter, roi_filter, cloud_filter, asset_filter],
         }
-        
-        planet_filter = {
-            "item_types": ["PSScene"],
-            "filter": combined_filter
-        }
+
+        planet_filter = {"item_types": ["PSScene"], "filter": combined_filter}
 
         self.filter = planet_filter
 
@@ -71,26 +61,32 @@ class PlanetFilter:
     def __load_roi(roi):
         with open(roi) as f:
             roi_json = json.load(f)
-        
+
         try:
             # If ROI geojson was formatted as an individual polygon, do nothing else
-            if roi_json['type'] == 'Polygon' or  roi_json['type'] == 'MultiPolygon':
+            if roi_json["type"] == "Polygon" or roi_json["type"] == "MultiPolygon":
                 pass
             # If a collection of features was passed, select the first polygon
-            elif roi_json['type'] == 'FeatureCollection':
+            elif roi_json["type"] == "FeatureCollection":
                 # Extract only polygons from the collection
-                roi_polygons = [feature['geometry'] for feature in roi_json['features'] if feature['geometry']['type'] == 'Polygon']
+                roi_polygons = [
+                    feature["geometry"]
+                    for feature in roi_json["features"]
+                    if feature["geometry"]["type"] == "Polygon"
+                ]
 
-                if len(roi_json['features']) > 1:
-                    print(f"ROI {roi} has more than one feature. Only using the first one")
+                if len(roi_json["features"]) > 1:
+                    print(
+                        f"ROI {roi} has more than one feature. Only using the first one"
+                    )
                     roi_json = roi_polygons[0]
-                elif len(roi_json['features']) == 0:
+                elif len(roi_json["features"]) == 0:
                     print(f"No polygons found in {roi}")
                     roi_json = None
             else:
                 roi_json = None
         except:
-            print(f'Error in loading ROI {roi}')
+            print(f"Error in loading ROI {roi}")
             roi_json = None
 
         return roi_json
@@ -117,25 +113,27 @@ class AssetSelector:
 
             for i, row in enumerate(filter_csv):
                 planet_filter = PlanetFilter(
-                    roi = row[0], 
-                    min_date = row[1], 
-                    max_date = row[2], 
-                    max_cloud_cover = row[3],
-                    asset_type = row[4])
-                
+                    roi=row[0],
+                    min_date=row[1],
+                    max_date=row[2],
+                    max_cloud_cover=row[3],
+                    asset_type=row[4],
+                )
+
                 planet_filter.build_filter()
 
-                query_name = f'{Path(row[0]).stem}_{row[1].replace("-", "")}_{row[2].replace("-", "")}_{row[5]}:{row[6]}'  
-                print(f'\nQuerying DATA API: {filter_csv.line_num - 1} of {row_count}')                  
+                query_name = f'{Path(row[0]).stem}_{row[1].replace("-", "")}_{row[2].replace("-", "")}_{row[5]}:{row[6]}'
+                print(f"\nQuerying DATA API: {filter_csv.line_num - 1} of {row_count}")
 
                 query_result = DataQuery(
-                    planet_filter = planet_filter, 
-                    min_tide = row[5], 
-                    max_tide = row[6],
-                    port = row[7], 
-                    layers = row[8],
-                    query_name = query_name,
-                    planet_session = self.planet_session)
+                    planet_filter=planet_filter,
+                    min_tide=row[5],
+                    max_tide=row[6],
+                    port=row[7],
+                    layers=row[8],
+                    query_name=query_name,
+                    planet_session=self.planet_session,
+                )
 
                 self.queries.append(query_result)
 
@@ -155,7 +153,7 @@ class AssetSelector:
 
             if query_hash in queued_hashes:
                 optimal_tiles.append(None)
-                print(f'Query {query.name} is already in queue. Skipping.')
+                print(f"Query {query.name} is already in queue. Skipping.")
                 continue
 
             optimizer = MosaicOptimizer(query)
@@ -163,8 +161,7 @@ class AssetSelector:
             optimal_tiles.append(query_result)
             geometries.append(optimizer.items)
 
-            print(f'Optimizing selected assets: {i + 1} of {query_number}')
-
+            print(f"Optimizing selected assets: {i + 1} of {query_number}")
 
         self.optimal_tiles = optimal_tiles
 
@@ -185,7 +182,7 @@ class AssetSelector:
                 "items": [],
                 "ordered": False,
                 "downloaded": False,
-                "area": query_area
+                "area": query_area,
             }
 
             for j, layer in enumerate(self.optimal_tiles[i]):
@@ -204,7 +201,7 @@ class AssetSelector:
             if query is None or self.optimal_tiles[i] is None:
                 continue
 
-            report_name = f'{query.name}.pdf'
+            report_name = f"{query.name}.pdf"
             PAGE_SIZE = 1200
             grid_size = math.floor((PAGE_SIZE - 200) / grid_cell_number)
             report_path = pathlib.Path(os.path.join(destination_folder, report_name))
@@ -221,20 +218,25 @@ class AssetSelector:
             # Store which items must be included in the report for this query
             query_items = []
             # And the total bandwith used / wasted by the query
-            query_stats = {
-                "query_area": 0,
-                "wasted_area": 0
-            }
+            query_stats = {"query_area": 0, "wasted_area": 0}
 
             for layer in self.optimal_tiles[i]:
                 query_items.extend(layer[0])
                 mosaic_stats = layer[1]
-                query_stats["query_area"] = query_stats["query_area"] + mosaic_stats["mosaic_area"]
-                query_stats["wasted_area"] = query_stats["wasted_area"] + mosaic_stats["wasted_area"]
+                query_stats["query_area"] = (
+                    query_stats["query_area"] + mosaic_stats["mosaic_area"]
+                )
+                query_stats["wasted_area"] = (
+                    query_stats["wasted_area"] + mosaic_stats["wasted_area"]
+                )
 
             # Start by adding the stats of that query to the page
-            canvas.drawString(500, -100, f'used bandwidth:{round(query_stats["query_area"])} km2')
-            canvas.drawString(500, -120, f'wasted bandwidth:{round(query_stats["wasted_area"])} km2')
+            canvas.drawString(
+                500, -100, f'used bandwidth:{round(query_stats["query_area"])} km2'
+            )
+            canvas.drawString(
+                500, -120, f'wasted bandwidth:{round(query_stats["wasted_area"])} km2'
+            )
 
             for j, item_index in enumerate(query_items):
                 item = self.queries[i].items[item_index]
@@ -244,7 +246,9 @@ class AssetSelector:
 
                 # Recommendations from requests author on reading image from a request
                 # https://2.python-requests.org/en/latest/user/quickstart/#binary-response-content
-                thumbnail = self.planet_session.get(item["_links"]["thumbnail"], stream=True)
+                thumbnail = self.planet_session.get(
+                    item["_links"]["thumbnail"], stream=True
+                )
                 thumbnail = PIL.Image.open(BytesIO(thumbnail.content))
                 time.sleep(0.1)
 
@@ -252,13 +256,24 @@ class AssetSelector:
                 cloud_cover = str(item["properties"]["cloud_cover"])
                 stage = str(item["properties"]["publishing_stage"])
                 item_id = str(item["id"])
-                tide = str(item["properties"]["tidal_height"]) if "tidal_height" in item["properties"] else "NA"
+                tide = (
+                    str(item["properties"]["tidal_height"])
+                    if "tidal_height" in item["properties"]
+                    else "NA"
+                )
 
-                canvas.drawImage(ImageReader(thumbnail), x, - y - image_size, width=image_size,
-                                 height=image_size)
-                canvas.drawString(x, - y - image_size - 15, f'{item_id} : {acquired}')
-                canvas.drawString(x, - y - image_size - 30, f'cloud cover:{cloud_cover}  tide:{tide}')
-                canvas.drawString(x, - y - image_size - 45, stage)
+                canvas.drawImage(
+                    ImageReader(thumbnail),
+                    x,
+                    -y - image_size,
+                    width=image_size,
+                    height=image_size,
+                )
+                canvas.drawString(x, -y - image_size - 15, f"{item_id} : {acquired}")
+                canvas.drawString(
+                    x, -y - image_size - 30, f"cloud cover:{cloud_cover}  tide:{tide}"
+                )
+                canvas.drawString(x, -y - image_size - 45, stage)
 
                 drawn_thumbnails += 1
 
@@ -278,12 +293,14 @@ class AssetSelector:
                     col = 0
                     row = row + 1
 
-            print(f'Report saved to {report_path}')
+            print(f"Report saved to {report_path}")
             canvas.save()
 
     @staticmethod
     def __project_vectors(vector):
         wgs84 = pyproj.CRS("EPSG:4326")
         pttm06 = pyproj.CRS("EPSG:3763")
-        transformation = pyproj.Transformer.from_crs(wgs84, pttm06, always_xy=True).transform
+        transformation = pyproj.Transformer.from_crs(
+            wgs84, pttm06, always_xy=True
+        ).transform
         return transform(transformation, vector)

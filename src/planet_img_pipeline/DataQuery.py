@@ -5,8 +5,16 @@ from TideInterpolator import TideInterpolator
 
 
 class DataQuery:
-    def __init__(self, planet_filter, planet_session, 
-                 min_tide, max_tide, port, layers, query_name):
+    def __init__(
+        self,
+        planet_filter,
+        planet_session,
+        min_tide,
+        max_tide,
+        port,
+        layers,
+        query_name,
+    ):
         self.filter = planet_filter
         self.session = planet_session
         try:
@@ -18,21 +26,17 @@ class DataQuery:
             self.min_tide = float(min_tide)
         except ValueError:
             self.min_tide = None
-        self.port   = port
+        self.port = port
         self.layers = layers
-        self.name   = query_name
-        self.hash   = self.__hashname()
-        self.items  = self.__concat_items()
+        self.name = query_name
+        self.hash = self.__hashname()
+        self.items = self.__concat_items()
 
     def query_stats(self, interval):
-        stats_filter = {
-            "interval": interval,
-            "filter": self.filter.filter
-        }
+        stats_filter = {"interval": interval, "filter": self.filter.filter}
 
         image_stats = self.session.post(
-            "https://api.planet.com/data/v1/stats",
-            json=stats_filter
+            "https://api.planet.com/data/v1/stats", json=stats_filter
         )
 
         print(image_stats)
@@ -46,18 +50,20 @@ class DataQuery:
 
         tries = 0
         sleep = 1
-        # Submit query 
+        # Submit query
         while tries < 30:
             tries += 1
             try:
                 first_response_page = self.session.post(
-                    'https://api.planet.com/data/v1/quick-search?_sort=acquired asc&_page_size=50',
-                    json=self.filter.filter
+                    "https://api.planet.com/data/v1/quick-search?_sort=acquired asc&_page_size=50",
+                    json=self.filter.filter,
                 )
             except Exception:
                 # If the query fails, re-try
-                print(f'Error in checking delivery status. Retrying in {sleep ** 2 * 10} seconds')
-                time.sleep(sleep ** 2 * 10)
+                print(
+                    f"Error in checking delivery status. Retrying in {sleep ** 2 * 10} seconds"
+                )
+                time.sleep(sleep**2 * 10)
                 sleep += 1
                 continue
 
@@ -85,12 +91,19 @@ class DataQuery:
         if self.max_tide:
             items_filtered = []
             tide_interpolator = TideInterpolator()
-            print("Acquiring tide height at time of image captures. This might take a while.")
+            print(
+                "Acquiring tide height at time of image captures. This might take a while."
+            )
             for i, item in enumerate(items):
-                tidal_height = tide_interpolator.interpolate_tide(date_time=item["properties"]["acquired"], port=self.port)
+                tidal_height = tide_interpolator.interpolate_tide(
+                    date_time=item["properties"]["acquired"], port=self.port
+                )
 
-                if tidal_height >= self.min_tide and tidal_height <= self.max_tide :
-                    print(f"Asset {i + 1} of {len(items)} is within tidal range.", end = "\r")
+                if tidal_height >= self.min_tide and tidal_height <= self.max_tide:
+                    print(
+                        f"Asset {i + 1} of {len(items)} is within tidal range.",
+                        end="\r",
+                    )
                     item["properties"]["tidal_height"] = tidal_height
                     items_filtered.append(item)
         else:
@@ -105,11 +118,11 @@ class DataQuery:
 
     def __hashname(self):
         query_str = str(
-            str(self.layers) + 
-            str(self.min_tide) + 
-            str(self.max_tide) +
-              json.dumps(self.filter.filter)
-        ) 
-        query_hash = hashlib.md5(query_str.encode("utf-8")).hexdigest() 
+            str(self.layers)
+            + str(self.min_tide)
+            + str(self.max_tide)
+            + json.dumps(self.filter.filter)
+        )
+        query_hash = hashlib.md5(query_str.encode("utf-8")).hexdigest()
 
-        return query_hash   
+        return query_hash
