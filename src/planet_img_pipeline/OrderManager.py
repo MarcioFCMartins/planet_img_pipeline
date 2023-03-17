@@ -212,13 +212,13 @@ class OrderManager:
                 }
             ]
             # Clip to given ROI and create a composite from all images
-            clip = {"clip": {"aoi": query_roi}}
+            #clip = {"clip": {"aoi": query_roi}}
 
             # Build final request
             order_request = {
                 "name": query_id,
                 "products": query_products,
-                "tools": [clip],
+                #"tools": [clip],
             }
 
             areas.append(query_area)
