@@ -72,10 +72,10 @@ class PlanetFilter:
                 roi_polygons = [
                     feature["geometry"]
                     for feature in roi_json["features"]
-                    if feature["geometry"]["type"] == "Polygon"
+                    if feature["geometry"]["type"] == "Polygon" or feature["geometry"]["type"]  == "MultiPolygon"
                 ]
 
-                if len(roi_json["features"]) > 1:
+                if len(roi_polygons) > 1:
                     print(
                         f"ROI {roi} has more than one feature. Only using the first one"
                     )
@@ -83,6 +83,9 @@ class PlanetFilter:
                 elif len(roi_json["features"]) == 0:
                     print(f"No polygons found in {roi}")
                     roi_json = None
+                else:
+                    roi_json = roi_polygons
+            # If no "type" is provided for the ROI, something is wrong
             else:
                 roi_json = None
         except:

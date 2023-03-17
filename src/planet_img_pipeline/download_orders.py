@@ -13,7 +13,7 @@ def main():
 
     order_manager = OrderManager("./outputs/download_queue.json", planet_session)
 
-    order_manager.place_orders()
+    #order_manager.place_orders()
 
     order_manager.download_orders("/mnt/10274c4b-4f18-41e0-a518-ff86b71a055f/planet_labs_imagery")
 
