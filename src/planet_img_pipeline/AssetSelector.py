@@ -76,18 +76,9 @@ class PlanetFilter:
                 ]
 
                 if len(roi_polygons) > 1:
-                    print(
-                        f"ROI {roi} has more than one feature. Only using the first one"
-                    )
-                    roi_json = roi_polygons[0]
-                elif len(roi_json["features"]) == 0:
-                    print(f"No polygons found in {roi}")
-                    roi_json = None
-                else:
-                    roi_json = roi_polygons
-            # If no "type" is provided for the ROI, something is wrong
-            else:
-                roi_json = None
+                    print(f"ROI {roi} has more than one polygon. Only using the first one")
+
+                roi_json = roi_polygons[0]
         except:
             print(f"Error in loading ROI {roi}")
             roi_json = None
