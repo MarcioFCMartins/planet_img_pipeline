@@ -1,4 +1,0 @@
-roi,start_date,end_date,max_cloud_cover,asset_type,min_tide,max_tide,port,n_layers
-./inputs/alvor-updated.geojson,2022-10-01,2022-12-31,0.1,ortho_analytic_8b_sr,2.7,2.9,18,2
-./inputs/alvor-updated.geojson,2022-01-01,2022-04-01,0.1,ortho_analytic_8b_sr,2.9,3.1,18,2
-./inputs/alvor-updated.geojson,2022-04-01,2022-07-01,0.1,ortho_analytic_8b_sr,2.9,3.1,18,2
