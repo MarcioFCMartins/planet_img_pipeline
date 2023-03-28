@@ -116,7 +116,7 @@ class TideInterpolator:
                     duration = table["date_time_utc"][i] - table["date_time_utc"][i - 1]
                 table["duration"].append(duration)
 
-            sleep(1)  # To avoid overloading the server with requests
+            sleep(0.1)  # To avoid overloading the server with requests
             self.previous_tidal_tables[
                 tidal_table_id
             ] = table  # Store queried table for next assets
