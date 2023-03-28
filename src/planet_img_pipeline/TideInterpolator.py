@@ -66,33 +66,42 @@ class TideInterpolator:
                 table = {"date_time_utc": [], "height": [], "phenomenon": []}
 
                 time_zones = re.findall("(?<=\\().*?(?=\\))", str(page.content))
-                time_zones = [
+                # Extract the number used to assign a timezone to each row
+                time_zone_code = [
+                    time_zone
+                    for i, time_zone in enumerate(time_zones)
+                    if i % 2 == 0
+                ]
+                # Extract the time shift for each timezone
+                time_zone_shift = [
                     time_zone
                     for i, time_zone in enumerate(time_zones)
                     if not i % 2 == 0
                 ]
-                time_zones = [
-                    re.findall("[+-][0-9]+$", time_zone) for time_zone in time_zones
+                time_zone_shift = [
+                    re.findall("[+-][0-9]+$", time_zone) for time_zone in time_zone_shift
                 ]
-                time_deltas = []
-                for time_zone in time_zones:
-                    if len(time_zone) > 0:
-                        time_delta = timedelta(hours=int(time_zone[0]))
-                        time_deltas.append(time_delta)
+
+                time_zones = {}
+                for i, code in enumerate(time_zone_code):
+                    # If there is no shift in the hour, set as zero
+                    if len(time_zone_shift[i]) == 0:
+                        time_zones[code] = timedelta(hours=0)
                     else:
-                        time_delta = timedelta(hours=0)
-                        time_deltas.append(time_delta)
+                        time_zones[code] = timedelta(hours=int(time_zone_shift[i][0])) 
 
                 for row in table_elements[1:]:
                     # Skip moon events
                     if re.search("mar", row[2].text_content()) is None:
                         continue
-                    row_time_zone = int(row[3].text_content()) - 1
-                    row_time_delta = time_deltas[row_time_zone]
+                    
+                    # Correct local time (in which tides are given) to UTC (in which satellite picture capture times are given)
+                    row_time_zone = str(row[3].text_content()) 
+                    row_time_delta = time_zones[row_time_zone]
                     row_date_time = datetime.strptime(
                         row[0].text_content(), "%Y-%m-%d %H:%M"
                     )
-                    row_date_time = row_date_time + row_time_delta
+                    row_date_time = row_date_time - row_time_delta
 
                     table["date_time_utc"].append(row_date_time)
                     table["height"].append(row[1].text_content())
@@ -171,3 +180,4 @@ class TideInterpolator:
         tidal_height = round(tidal_height, 2)
 
         return tidal_height
+
