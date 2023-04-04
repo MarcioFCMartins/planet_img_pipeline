@@ -108,7 +108,7 @@ class OrderManager:
                 # Retrieve the path to store each item in
                 results_names = [r["name"] for r in results]
                 # Replace the highest level path (query ID) with our user-based query name
-                results_names2 = [f'{order_name}/{pathlib.Path(*pathlib.Path(result).parts[1:])}' for result in results_names]
+                results_names = [f'{order_name}/{pathlib.Path(*pathlib.Path(result).parts[1:])}' for result in results_names]
 
                 for url, name in zip(results_urls, results_names):
                     file_path = pathlib.Path(os.path.join(download_path, name))
