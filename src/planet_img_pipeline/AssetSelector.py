@@ -116,7 +116,7 @@ class AssetSelector:
 
                 planet_filter.build_filter()
 
-                query_name = f'{Path(row[0]).stem}_{row[1].replace("-", "")}_{row[2].replace("-", "")}_{row[5]}:{row[6]}'
+                query_name = f'{Path(row[0]).stem}_{row[1].replace("-", "")}_{row[2].replace("-", "")}_{row[5]}-{row[6]}'
                 print(f"\nQuerying DATA API: {filter_csv.line_num - 1} of {row_count}")
 
                 query_result = DataQuery(
