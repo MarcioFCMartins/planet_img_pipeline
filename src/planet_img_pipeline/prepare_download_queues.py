@@ -4,7 +4,7 @@ import requests
 from AssetSelector import AssetSelector
 from dotenv import load_dotenv
 
-
+# TODO One day add option to harmonize images - https://support.planet.com/hc/en-us/articles/4405971577501-Why-How-and-When-to-Use-the-New-Target-Sensor-in-the-Harmonization-Tool
 # Main application
 def main():
     # Create HTML session with proper Planets key 
