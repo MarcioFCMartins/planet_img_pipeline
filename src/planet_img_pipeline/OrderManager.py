@@ -72,18 +72,11 @@ class OrderManager:
 
                 elif final_response["state"] == "failed":
                     # If order failed due to lack of quota, stop placing more orders
-                    if (
-                        final_response["last_message"]
-                        == "Quota check failed - Over quota "
-                    ):
-                        print(
-                            "Your monthly quota was exhausted. Stopping order placement."
-                        )
+                    if (final_response["last_message"] == "Quota check failed - Over quota "):
+                        print("Your monthly quota was exhausted. Stopping order placement.")
                         break
                     else:
-                        print(
-                            f'Order {final_response["name"]} failed due to:\n{final_response["last_message"]}'
-                        )
+                        print(f'Order {final_response["name"]} failed due to:\n{final_response["last_message"]}')
             # If order placement failed, print error and try next order
             else:
                 print(f'Order {order["name"]} returned an unexpected result:')
@@ -107,7 +100,7 @@ class OrderManager:
                 results_urls = [r["location"] for r in results]
                 # Retrieve the path to store each item in
                 results_names = [r["name"] for r in results]
-                # Replace the highest level path (query ID) with our user-based query name
+                # Replace the query ID in the file path with our user-based query name
                 results_names = [f'{order_name}/{pathlib.Path(*pathlib.Path(result).parts[1:])}' for result in results_names]
 
                 for url, name in zip(results_urls, results_names):
