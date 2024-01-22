@@ -1,5 +1,6 @@
-*.pdf
-inputs/image-queries.csv
+# Folders that I don't want to upload
+outputs/
+inputs/
 
 
 # Byte-compiled / optimized / DLL files
