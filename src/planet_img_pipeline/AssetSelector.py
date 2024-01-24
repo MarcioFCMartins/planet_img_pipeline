@@ -21,8 +21,8 @@ from shapely.ops import transform
 class PlanetFilter:
     def __init__(self, roi, min_date, max_date, max_cloud_cover, asset_type):
         self.roi = self.__load_roi(roi)
-        self.min_date = f"{min_date}T00:00:00.000Z"
-        self.max_date = f"{max_date}T00:00:00.000Z"
+        self.min_date = f"{min_date}T00:00:01.000Z"
+        self.max_date = f"{max_date}T23:59:59.000Z"
         self.max_cloud_cover = float(max_cloud_cover)
         self.asset_type = asset_type
         self.filter = None

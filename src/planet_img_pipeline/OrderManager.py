@@ -165,7 +165,7 @@ class OrderManager:
     def _wait_for_final_state(self, order_url):
         tries = 0
         sleep = 1
-        while tries < 30:
+        while True:
             tries += 1
             try:
                 response = self.session.get(order_url).json()
