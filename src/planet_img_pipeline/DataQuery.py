@@ -88,7 +88,7 @@ class DataQuery:
             else:
                 current_page = self.session.get(next_page_link).json()
 
-        if self.max_tide:
+        if self.max_tide & self.min_tide:
             items_filtered = []
             tide_interpolator = TideInterpolator()
             print(
