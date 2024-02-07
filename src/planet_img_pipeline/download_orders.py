@@ -10,7 +10,7 @@ def main():
     # Load planet API key
     load_dotenv()
     API_KEY = os.getenv("API_KEY")
-    # Authenthicate session
+    # Authenticate session
     planet_session = requests.Session()
     planet_session.auth = (API_KEY, "")
 

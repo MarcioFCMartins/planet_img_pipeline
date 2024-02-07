@@ -23,7 +23,7 @@ def main():
 
     # Load the previous image queries and setup settings for new requests
     query_processor = AssetSelector(
-        args.output,
+        args.queue,
         planet_session=planet_session
     )
 
