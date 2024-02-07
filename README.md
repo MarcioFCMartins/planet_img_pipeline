@@ -41,7 +41,6 @@ pip3 install -r requirements.txt
 <br>
 <br>
 
-**4. Planet API key**
 ### 2.1. Planet API key
 
 To perform any operation using the Planet API, you have to provide your own API key. 
