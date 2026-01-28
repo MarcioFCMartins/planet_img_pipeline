@@ -6,7 +6,7 @@ from shapely.ops import transform
 class MosaicOptimizer:
     """
     This class provides methods to select which tiles are optimal to cover the ROI and preview that
-     tile selection would look like.
+    tile selection would look like.
     """
 
     def __init__(self, data_query):

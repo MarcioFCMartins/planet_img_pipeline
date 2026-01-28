@@ -10,7 +10,7 @@ def main():
     # Create HTML session with proper Planets key 
     # Get your key in your Planet account page and place it in .env
     load_dotenv()
-    API_KEY = os.getenv("API_KEY")
+    API_KEY = os.getenv("PLANET_KEY")
     planet_session = requests.Session()
     planet_session.auth = (API_KEY, "")
 
@@ -31,7 +31,7 @@ def main():
     query_processor.query_available_data(args.queries)
 
     print("\nStarting data optimization")
-    query_processor.optimize_available_data(min_coverage=0.95)
+    query_processor.optimize_available_data(min_coverage=0.90)
 
     print("\nCreating asset download queue.")
     query_processor.create_download_queue()
