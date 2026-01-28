@@ -41,7 +41,7 @@ class MosaicOptimizer:
         # Estimate the intersection area between each of the query items and the ROI
         # https://stackoverflow.com/questions/50372135/calculate-overlap-between-polygon-and-shapefile-in-python-3-6
         intersection_area = []
-        for i, item in enumerate(self.items):
+        for i, item in enumerate(self.items.geoms):
             current_intersect = self.roi.intersection(item.convex_hull)
             intersection_area.append(current_intersect.area / 1000000)
 
@@ -55,7 +55,7 @@ class MosaicOptimizer:
         mosaics = [[[index], None] for index in mosaics]
         for i in range(len(mosaics)):
             starter_index = mosaics[i][0][0]
-            starter_item = self.items[starter_index]
+            starter_item = self.items.geoms[starter_index]
             missing_region = self.roi.difference(starter_item)
             covered_region = starter_item
             missing_fraction = missing_region.area / self.roi.area
@@ -66,7 +66,7 @@ class MosaicOptimizer:
                 # https://stackoverflow.com/questions/50372135/calculate-overlap-between-polygon-and-shapefile-in-python-3-6
                 intersection_area = []
                 wasted_area = []
-                for j, item in enumerate(self.items):
+                for j, item in enumerate(self.items.geoms):
                     if j in included_items:
                         intersection_area.append(0)
                         wasted_area.append(item.area)
@@ -104,9 +104,9 @@ class MosaicOptimizer:
 
                 mosaics[i][0].append(new_tile_index)
                 included_items.append(new_tile_index)
-                missing_region = missing_region.difference(self.items[new_tile_index])
+                missing_region = missing_region.difference(self.items.geoms[new_tile_index])
                 missing_fraction = missing_region.area / self.roi.area
-                covered_region = covered_region.union(self.items[new_tile_index])
+                covered_region = covered_region.union(self.items.geoms[new_tile_index])
 
             # Returns the area of the mosaic,
             mosaics[i][1] = {

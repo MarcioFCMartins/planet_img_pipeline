@@ -73,6 +73,7 @@ class DataQuery:
 
         if not first_response_page.ok:
             print("There was an error with this query, please check your inputs.")
+            print(first_response_page.json())
             return None
 
         if not current_page["features"]:
