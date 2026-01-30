@@ -2,7 +2,7 @@ import os
 import requests
 from argparse import ArgumentParser
 from dotenv import load_dotenv
-from OrderManager import OrderManager
+from src.OrderExecutor import OrderExecutor
 
 
 
@@ -21,7 +21,7 @@ def main():
     args = parser.parse_args()
 
     # Create order manager
-    order_manager = OrderManager(args.queue, planet_session)
+    order_manager = OrderExecutor(args.queue, planet_session)
     
     # If there is available quota, place new orders
     if order_manager._available_quota() > 0:

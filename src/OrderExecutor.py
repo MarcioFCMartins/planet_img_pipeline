@@ -5,10 +5,9 @@ import time
 import requests
 
 
-class OrderManager:
+class OrderExecutor:
     """
-    Uses Planet's orders API to clip and combine items selected by 'Asset Selector' into a single
-    image ready to download and analyze
+    Uses Planet's orders API to clip and download imagery based on a download queue.
     https://github.com/planetlabs/notebooks/blob/master/jupyter-notebooks/orders/tools_and_toolchains.ipynb
     https://github.com/planetlabs/notebooks/blob/master/jupyter-notebooks/orders/ordering_and_delivery.ipynb
     """
@@ -205,13 +204,13 @@ class OrderManager:
                 }
             ]
             # Clip to given ROI and create a composite from all images
-            #clip = {"clip": {"aoi": query_roi}}
+            clip = {"clip": {"aoi": query_roi}}
 
             # Build final request
             order_request = {
                 "name": query_id,
                 "products": query_products,
-                #"tools": [clip],
+                "tools": [clip],
             }
 
             areas.append(query_area)

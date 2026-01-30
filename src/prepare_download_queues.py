@@ -2,7 +2,7 @@ import os
 import requests
 
 from argparse import ArgumentParser
-from AssetSelector import AssetSelector
+from OrderCreator import OrderCreator
 from dotenv import load_dotenv
 
 
@@ -22,21 +22,20 @@ def main():
     args = parser.parse_args()
 
     # Load the previous image queries and setup settings for new requests
-    query_processor = AssetSelector(
+    available_data_selector = OrderCreator(
         args.queue,
         planet_session=planet_session
     )
 
     # Load new requests from CSV file
-    query_processor.query_available_data(args.queries)
+    available_data_selector.query_available_data(args.queries)
 
     print("\nStarting data optimization")
-    query_processor.optimize_available_data(min_coverage=0.90)
-
+    available_data_selector.optimize_available_data(min_coverage=0.90)
     print("\nCreating asset download queue.")
-    query_processor.create_download_queue()
+    available_data_selector.create_download_queue()
 
-    query_processor.generate_report(3, args.report)
+    available_data_selector.generate_report(3, args.report)
     print("\nDownload queue has been created successfully.")
 
 # If running script, run application

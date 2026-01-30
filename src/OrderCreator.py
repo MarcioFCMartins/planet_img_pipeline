@@ -8,8 +8,9 @@ import pyproj
 import pathlib
 import os
 
-from TideInterpolator import TideInterpolator
-from DataQuery import DataQuery
+# Access helper classes
+from DataAPIHelpers import AvailableDataQuery
+from DataAPIHelpers import PlanetFilter
 from MosaicOptimizer import MosaicOptimizer
 from pathlib import Path
 from reportlab.lib.utils import ImageReader
@@ -18,75 +19,7 @@ from shapely.geometry import shape
 from shapely.ops import transform
 
 
-class PlanetFilter:
-    def __init__(self, roi, min_date, max_date, max_cloud_cover, asset_type):
-        self.roi = self.__load_roi(roi)
-        self.min_date = f"{min_date}T00:00:01.000Z"
-        self.max_date = f"{max_date}T23:59:59.000Z"
-        self.max_cloud_cover = float(max_cloud_cover)
-        self.asset_type = asset_type
-        self.filter = None
-
-    def build_filter(self):
-        date_range_filter = {
-            "type": "DateRangeFilter",
-            "field_name": "acquired",
-            "config": {"gte": self.min_date, "lte": self.max_date},
-        }
-
-        roi_filter = {
-            "type": "GeometryFilter",
-            "field_name": "geometry",
-            "config": self.roi,
-        }
-
-        cloud_filter = {
-            "type": "RangeFilter",
-            "field_name": "cloud_cover",
-            "config": {"lte": self.max_cloud_cover},
-        }
-
-        asset_filter = {"type": "AssetFilter", "config": [self.asset_type]}
-
-        combined_filter = {
-            "type": "AndFilter",
-            "config": [date_range_filter, roi_filter, cloud_filter, asset_filter],
-        }
-
-        planet_filter = {"item_types": ["PSScene"], "filter": combined_filter}
-
-        self.filter = planet_filter
-
-    @staticmethod
-    def __load_roi(roi):
-        with open(roi) as f:
-            roi_json = json.load(f)
-
-        try:
-            # If ROI geojson was formatted as an individual polygon, do nothing else
-            if roi_json["type"] == "Polygon" or roi_json["type"] == "MultiPolygon":
-                pass
-            # If a collection of features was passed, select the first polygon
-            elif roi_json["type"] == "FeatureCollection":
-                # Extract only polygons from the collection
-                roi_polygons = [
-                    feature["geometry"]
-                    for feature in roi_json["features"]
-                    if feature["geometry"]["type"] == "Polygon" or feature["geometry"]["type"]  == "MultiPolygon"
-                ]
-
-                if len(roi_polygons) > 1:
-                    print(f"ROI {roi} has more than one polygon. Only using the first one")
-
-                roi_json = roi_polygons[0]
-        except:
-            print(f"Error in loading ROI {roi}")
-            roi_json = None
-
-        return roi_json
-
-
-class AssetSelector:
+class OrderCreator:
     def __init__(self, download_queue_path, planet_session):
         self.planet_session = planet_session
         self.queries = []
@@ -111,7 +44,7 @@ class AssetSelector:
                     min_date=row[1],
                     max_date=row[2],
                     max_cloud_cover=row[3],
-                    asset_type=row[4],
+                    asset_type=row[4]
                 )
 
                 planet_filter.build_filter()
@@ -120,14 +53,15 @@ class AssetSelector:
                 query_name = f'{Path(row[0]).stem}_{row[1].replace("-", "")}-{row[2].replace("-", "")}_{row[5]}-{row[6]}'
                 print(f"\nQuerying DATA API: {filter_csv.line_num - 1} of {row_count}")
 
-                query_result = DataQuery(
+                query_result = AvailableDataQuery(
                     planet_filter=planet_filter,
                     min_tide=row[5],
                     max_tide=row[6],
-                    port=row[7],
-                    layers=row[8],
+                    port    =row[7],
+                    layers  =row[8],
+                    clip    =row[9],
                     query_name=query_name,
-                    planet_session=self.planet_session,
+                    planet_session=self.planet_session
                 )
 
                 self.queries.append(query_result)

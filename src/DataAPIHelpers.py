@@ -3,8 +3,74 @@ import json
 import hashlib
 from TideInterpolator import TideInterpolator
 
+class PlanetFilter:
+    def __init__(self, roi, min_date, max_date, max_cloud_cover, asset_type):
+        self.roi = self.__load_roi(roi)
+        self.min_date = f"{min_date}T00:00:01.000Z"
+        self.max_date = f"{max_date}T23:59:59.000Z"
+        self.max_cloud_cover = float(max_cloud_cover)
+        self.asset_type = asset_type
+        self.filter = None
 
-class DataQuery:
+    def build_filter(self):
+        date_range_filter = {
+            "type": "DateRangeFilter",
+            "field_name": "acquired",
+            "config": {"gte": self.min_date, "lte": self.max_date},
+        }
+
+        roi_filter = {
+            "type": "GeometryFilter",
+            "field_name": "geometry",
+            "config": self.roi,
+        }
+
+        cloud_filter = {
+            "type": "RangeFilter",
+            "field_name": "cloud_cover",
+            "config": {"lte": self.max_cloud_cover},
+        }
+
+        asset_filter = {"type": "AssetFilter", "config": [self.asset_type]}
+
+        combined_filter = {
+            "type": "AndFilter",
+            "config": [date_range_filter, roi_filter, cloud_filter, asset_filter],
+        }
+
+        planet_filter = {"item_types": ["PSScene"], "filter": combined_filter}
+
+        self.filter = planet_filter
+
+    @staticmethod
+    def __load_roi(roi):
+        with open(roi) as f:
+            roi_json = json.load(f)
+
+        try:
+            # If ROI geojson was formatted as an individual polygon, do nothing else
+            if roi_json["type"] == "Polygon" or roi_json["type"] == "MultiPolygon":
+                pass
+            # If a collection of features was passed, select the first polygon
+            elif roi_json["type"] == "FeatureCollection":
+                # Extract only polygons from the collection
+                roi_polygons = [
+                    feature["geometry"]
+                    for feature in roi_json["features"]
+                    if feature["geometry"]["type"] == "Polygon" or feature["geometry"]["type"]  == "MultiPolygon"
+                ]
+
+                if len(roi_polygons) > 1:
+                    print(f"ROI {roi} has more than one polygon. Only using the first one")
+
+                roi_json = roi_polygons[0]
+        except:
+            print(f"Error in loading ROI {roi}")
+            roi_json = None
+
+        return roi_json
+
+class AvailableDataQuery:
     def __init__(
         self,
         planet_filter,
@@ -13,6 +79,7 @@ class DataQuery:
         max_tide,
         port,
         layers,
+        clip,
         query_name,
     ):
         self.filter = planet_filter
@@ -28,6 +95,7 @@ class DataQuery:
             self.min_tide = None
         self.port = port
         self.layers = layers
+        self.clip = clip
         self.name = query_name
         self.hash = self.__hashname()
         self.items = self.__concat_items()
