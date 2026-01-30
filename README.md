@@ -64,7 +64,7 @@ You should replace the \<your-key-here\> with your own API key. Do NOT share thi
 Your regions of interest should provided as geoJSON files.  Currently, the program only handles single polygons. If you place files with any other geometry type or multiple polygons, only the first one will be used.
 
 **Query parameters:**  
-Image selection is done based on parameters passed through a `csv` file, which can be found in `inputs/image-queries.csv`.
+Image selection is done based on parameters passed through a `csv` file. An example can be found in `inputs/image-queries.csv`.
 
 Currently, the following image parameters can be passed to the program:  
 1. roi -  Path to the polygon of the region of interest for which images will be selected.
@@ -76,6 +76,7 @@ Currently, the following image parameters can be passed to the program:
 7. max-tide  Maximum tidal height acceptable. If you do not want to use tide filtering, leave blank.
 8. port - This is the code for the reference port to be used to estimate tides. These are numeric codes provided by the Instituto Hidrográfico. You can consult a list of available sites here below.
 9. n_layers - How many overlapping layers you are aiming for in your ROI
+10. clip - Should the selected images be masked so that only your ROI is downloaded? (y/yes for true)
 
 **Port list**
 
