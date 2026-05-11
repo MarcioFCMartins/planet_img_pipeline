@@ -49,7 +49,7 @@ class OrderCreator:
 
                 planet_filter.build_filter()
 
-                                # ROI file name   _ start date              - end date                _min tide-max tide
+                # ROI file name   _ start date              - end date                _min tide-max tide
                 query_name = f'{Path(row[0]).stem}_{row[1].replace("-", "")}-{row[2].replace("-", "")}_{row[5]}-{row[6]}'
                 print(f"\nQuerying DATA API: {filter_csv.line_num - 1} of {row_count}")
 
@@ -172,7 +172,7 @@ class OrderCreator:
                 # Get coordinates in the page for corresponding cell
                 x = col * grid_size
                 y = row * grid_size + 200  # Leave top of page empty for mosaic stats
-
+                
                 # Recommendations from requests author on reading image from a request
                 # https://2.python-requests.org/en/latest/user/quickstart/#binary-response-content
                 thumbnail = self.planet_session.get(

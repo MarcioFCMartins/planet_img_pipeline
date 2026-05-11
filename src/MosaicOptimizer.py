@@ -5,7 +5,7 @@ from shapely.ops import transform
 
 class MosaicOptimizer:
     """
-    This class provides methods to select which tiles are optimal to cover the ROI and preview that
+    This class provides methods to select which tiles are optimal to cover the ROI and preview what
     tile selection would look like.
     """
 
@@ -51,6 +51,7 @@ class MosaicOptimizer:
         )[-int(n_layers) :]
         mosaics.extend(starter_indices)
         # Keep track of which items were already used in this query
+        
         included_items = mosaics.copy()
         mosaics = [[[index], None] for index in mosaics]
         for i in range(len(mosaics)):
