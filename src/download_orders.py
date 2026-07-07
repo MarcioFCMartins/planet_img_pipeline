@@ -2,7 +2,7 @@ import os
 import requests
 from argparse import ArgumentParser
 from dotenv import load_dotenv
-from src.OrderExecutor import OrderExecutor
+from OrderExecutor import OrderExecutor
 
 
 

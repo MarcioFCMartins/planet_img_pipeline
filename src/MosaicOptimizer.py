@@ -50,9 +50,10 @@ class MosaicOptimizer:
             range(len(intersection_area)), key=lambda i: intersection_area[i]
         )[-int(n_layers) :]
         mosaics.extend(starter_indices)
-        # Keep track of which items were already used in this query
         
+        # Keep track of which items were already used in this query
         included_items = mosaics.copy()
+
         mosaics = [[[index], None] for index in mosaics]
         for i in range(len(mosaics)):
             starter_index = mosaics[i][0][0]
