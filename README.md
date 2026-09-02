@@ -7,7 +7,7 @@ It also leverages the Instituto Hidrográfico's HTML API to also estimate tidal 
 
 ## Setup - first time
 
-This program has only been tested in Ubuntu 22.04.
+This program was originally developed in Ubuntu 22.04. Due to the usage of outdated dependencies, I suggest using 'anaconda' to pin Python to 3.10. 
 
 **1. Clone the repo:**  
 ```
@@ -20,26 +20,15 @@ Then navigate into it:
 cd ./planet_img_pipeline
 ```
 
-**2. Create a virtual environment**
+**2. Create a virtual environment with all necessary requirements**
 
 ```
-python3 -m venv ./venv
+conda create -p ./venv python=3.10
+conda activate ./venv
+conda install -c conda-forge numpy=1.22.4 pandas=1.3.4 matplotlib=3.5.0 pillow=8.4.0 shapely=1.8.0 pyproj=3.3.0 lxml=4.6.4 requests=2.28.2
+pip install -r requirements.txt
 ```
 
-All required packages will be installed in this virtual environment. You need to activate it:
-
-```
-source ./venv/bin/activate
-```
-
-**3. Install python libraries**
-```bash
-sudo apt install python3-pip
-pip3 install -r requirements.txt
-```
-
-<br>
-<br>
 
 ### 2.1. Planet API key
 
